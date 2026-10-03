@@ -66,6 +66,8 @@ flowchart LR
 
 The implementation intentionally uses a small orchestration layer rather than an agent framework. There are two tools and one durable domain model, so explicit control keeps the behavior easier to inspect, test, and secure. See [DESIGN.md](DESIGN.md) for the detailed rationale.
 
+For a complete implementation report and step-by-step operating guide, see [docs/PROJECT_REPORT.md](docs/PROJECT_REPORT.md).
+
 ## Commands
 
 | Command | Purpose |
@@ -99,4 +101,3 @@ Facet is an exploration tool, not an automated hiring system. It does not rank c
 ## License
 
 [MIT](LICENSE) © 2026 Yasmin Tayebi
-
