@@ -56,7 +56,7 @@ Facet Scout is explicitly prevented from making hiring decisions or inferring pr
 
 ### Demo mode
 
-When no hosted API token is configured—or when the user does not consent to hosted processing—the application uses a deterministic demo agent. It guides the same profile-building stages and updates the same domain model.
+When no hosted API token is configured, or when the user does not consent to hosted processing, the application uses a deterministic demo agent. It guides the same profile-building stages and updates the same domain model.
 
 Demo mode is intentionally identified in the interface. It is not presented as model intelligence. This provides a reliable presentation path while keeping the hosted integration optional.
 
@@ -329,4 +329,3 @@ For a production evolution, the recommended order is:
 ## Conclusion
 
 Facet demonstrates a complete agentic product loop rather than a chat interface alone: conversation produces validated structured state, that state drives a separate user journey, and privacy controls determine when data becomes visible or leaves the server. The project can be demonstrated immediately in demo mode and upgraded to hosted model intelligence with one environment variable and explicit user consent.
-

@@ -17,7 +17,7 @@ export const seedProfiles: Profile[] = [
         id: "exp_amara_1",
         role: "Senior Product Designer",
         organization: "Northstar Finance",
-        period: "2022–Present",
+        period: "2022 - Present",
         impact: [
           "Led a cross-functional redesign of account recovery, reducing support contacts by 31%.",
           "Built an accessibility review practice adopted by four product squads.",
@@ -27,7 +27,7 @@ export const seedProfiles: Profile[] = [
         id: "exp_amara_2",
         role: "Product Designer",
         organization: "Civic Thread",
-        period: "2019–2022",
+        period: "2019 - 2022",
         impact: ["Improved application completion by 22% through research-led service redesign."],
       },
     ],
@@ -58,7 +58,7 @@ export const seedProfiles: Profile[] = [
         id: "exp_leon_1",
         role: "Machine Learning Engineer",
         organization: "Relay AI",
-        period: "2021–Present",
+        period: "2021 - Present",
         impact: [
           "Designed an evaluation harness that caught 68% more regressions before release.",
           "Cut retrieval latency from 640 ms to 180 ms at p95.",
@@ -92,7 +92,7 @@ export const seedProfiles: Profile[] = [
         id: "exp_sofia_1",
         role: "Head of Operations",
         organization: "Canopy Grid",
-        period: "2020–2026",
+        period: "2020 - 2026",
         impact: [
           "Scaled operations from 28 to 140 people across five countries.",
           "Shortened quarterly planning from three weeks to six working days.",
@@ -112,4 +112,3 @@ export const seedProfiles: Profile[] = [
     updatedAt: now,
   },
 ];
-

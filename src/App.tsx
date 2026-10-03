@@ -54,7 +54,7 @@ function Home({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
           <div className="eyebrow"><Sparkles size={15} /> Conversational career intelligence</div>
           <h1>More than a résumé.<br /><em>A profile with proof.</em></h1>
           <p className="hero-lead">
-            Facet asks the questions that uncover how people really work—then turns their answers into clear, evidence-rich profiles.
+            Facet asks the questions that uncover how people really work. It then turns their answers into clear, evidence-rich profiles.
           </p>
           <div className="hero-actions">
             <button className="button primary" onClick={() => onNavigate("employee")}>Build your profile <ArrowRight size={18} /></button>
@@ -83,13 +83,13 @@ function Home({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
       </section>
 
       <section className="journeys">
-        <div className="section-heading"><span>Two sides of a better introduction</span><h2>Built for the person—and the person looking.</h2></div>
+        <div className="section-heading"><span>Two sides of a better introduction</span><h2>Built for the person and the person looking.</h2></div>
         <div className="journey-grid">
           <button className="journey-card employee-card" onClick={() => onNavigate("employee")}>
             <div className="journey-icon"><UserRound /></div>
             <span className="card-label">For professionals</span>
             <h3>Find the signal in your story.</h3>
-            <p>A thoughtful interview uncovers achievements, judgment, and working style—one useful question at a time.</p>
+            <p>A thoughtful interview uncovers achievements, judgment, and working style, one useful question at a time.</p>
             <span className="card-link">Start a conversation <ArrowRight size={17} /></span>
           </button>
           <button className="journey-card employer-card" onClick={() => onNavigate("employer")}>
@@ -108,7 +108,7 @@ function Home({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
 const demoAnswers = [
   "I design AI products and turn ambiguous research into tools people can trust.",
   "I led an evaluation redesign that caught 40% more failures before release.",
-  "Senior AI Engineer at Atlas Labs, 2023–present; I owned evaluation and deployment.",
+  "Senior AI Engineer at Atlas Labs, 2023 to present; I owned evaluation and deployment.",
   "Python, LLM evaluation, stakeholder facilitation, MLOps, technical writing",
   "Applied AI Lead, remote or hybrid",
   "I also mentor junior engineers and created our model-review playbook.",
@@ -381,4 +381,3 @@ export default function App() {
     </div>
   );
 }
-

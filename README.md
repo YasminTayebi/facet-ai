@@ -6,12 +6,12 @@ Facet deliberately avoids the usual résumé pattern of collecting fields. The a
 
 ## What makes it different
 
-- **Adaptive employee interview** — follow-up questions respond to the last answer instead of following a static form.
-- **Evidence over adjectives** — skills are stored with context; achievements capture ownership and outcome.
-- **Separate employer journey** — published profiles can be searched and explored through profile-grounded Q&A.
-- **Privacy by design** — drafts never appear in search, hosted inference requires consent, and the token stays server-side.
-- **Useful without an API key** — a deterministic demo agent makes both journeys immediately testable.
-- **No model downloads** — live AI uses a hosted Hugging Face Inference Provider.
+- **Adaptive employee interview:** Follow-up questions respond to the last answer instead of following a static form.
+- **Evidence over adjectives:** Skills are stored with context; achievements capture ownership and outcome.
+- **Separate employer journey:** Published profiles can be searched and explored through profile-grounded Q&A.
+- **Privacy by design:** Drafts never appear in search, hosted inference requires consent, and the token stays server-side.
+- **Useful without an API key:** A deterministic demo agent makes both journeys immediately testable.
+- **No model downloads:** Live AI uses a hosted Hugging Face Inference Provider.
 
 ## Quick start
 
@@ -48,7 +48,7 @@ No model weights are installed or downloaded. Calls go to `https://router.huggin
 1. Search published profiles by role, skill, location, or evidence.
 2. Read experience and skills in context.
 3. Ask Facet Scout about strengths, gaps, or interview questions.
-4. Receive profile-grounded answers—not autonomous hiring decisions.
+4. Receive profile-grounded answers, not autonomous hiring decisions.
 
 ## Architecture
 

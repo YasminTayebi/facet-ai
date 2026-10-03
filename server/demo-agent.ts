@@ -17,7 +17,7 @@ export const demoEmployeeTurn = (profile: Profile, stage: number, input: string)
 
   if (stage === 0) {
     next.headline = clean;
-    reply = `That gives us a useful direction. What is one piece of work you are especially proud of—and what changed because of your contribution?`;
+    reply = `That gives us a useful direction. What is one piece of work you are especially proud of, and what changed because of your contribution?`;
   } else if (stage === 1) {
     next.achievements = [...next.achievements, clean].slice(-4);
     next.summary = `${next.name} is a ${next.headline.toLowerCase()} with a record of turning responsibility into visible outcomes. ${clean}`;
@@ -33,7 +33,7 @@ export const demoEmployeeTurn = (profile: Profile, stage: number, input: string)
         impact: [clean],
       },
     ].slice(-4);
-    reply = `Good—your ownership is becoming clearer. Which 3–5 skills were decisive in producing that outcome? Separate tools from the human or strategic skills you relied on.`;
+    reply = `Good, your ownership is becoming clearer. Which three to five skills were decisive in producing that outcome? Separate tools from the human or strategic skills you relied on.`;
   } else if (stage === 3) {
     next.skills = splitList(clean).map((name) => ({
       name: name.replace(/^(tools?|skills?):\s*/i, ""),
@@ -75,4 +75,3 @@ export const demoEmployerTurn = (profile: Profile, question: string) => {
   }
   return `${profile.summary} The profile provides direct evidence through: ${profile.experiences[0]?.impact[0] ?? "no detailed impact statement yet"} A useful next question is: “What trade-off did you personally own in that work?”`;
 };
-

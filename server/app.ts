@@ -87,7 +87,7 @@ export const createApp = (store = new ProfileStore(config.dataFile)) => {
       const input = createSessionSchema.parse(request.body);
       const mode: Session["mode"] = config.hfToken && input.consentToHostedAI ? "hosted" : "demo";
       const profile = await store.saveProfile(createProfile(input.name));
-      const greeting = `Hi ${profile.name.split(" ")[0]}. I’ll help you turn your experience into a profile with real evidence—not buzzwords. To start, how would you describe the work you do and the value you create?`;
+      const greeting = `Hi ${profile.name.split(" ")[0]}. I’ll help you turn your experience into a profile with real evidence, not buzzwords. To start, how would you describe the work you do and the value you create?`;
       const session: Session = {
         id: uid("session"),
         profileId: profile.id,
