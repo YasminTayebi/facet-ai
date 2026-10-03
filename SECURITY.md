@@ -4,7 +4,11 @@
 
 When a user actively opts in, Facet sends the current professional profile and recent conversation messages to the configured Hugging Face Inference Provider. This can include names, employers, locations, achievements, skills, and work preferences. Facet does not send local files, environment variables, or the API token as model content.
 
-Users can leave hosted AI unchecked and use deterministic demo mode without sending conversation data to an external model provider.
+Users can leave hosted AI unchecked and use the local adaptive planner without sending conversation data to an external model provider.
+
+## MCP boundary
+
+The included MCP server exposes only published profiles through read-only tools. It does not provide profile creation, editing, publication, or deletion tools. Draft IDs return a not-found error. Treat the stdio server as a trusted local integration until authentication and client authorization are added.
 
 ## Deployment checklist
 
@@ -22,4 +26,3 @@ Before using Facet with real personal data:
 ## Reporting a vulnerability
 
 Please open a private security advisory in the GitHub repository. Do not include real personal information or secrets in the report.
-

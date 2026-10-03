@@ -1,7 +1,8 @@
-import type { Profile } from "../shared/types.js";
+import type { Message, Profile } from "../shared/types.js";
+import { assessInterview, planNextQuestion } from "./interview-intelligence.js";
 import { refreshProfile, uid } from "./profile.js";
 
-type DemoResult = { reply: string; profile: Profile; nextStage: number };
+type DemoResult = { reply: string; profile: Profile };
 
 const splitList = (value: string) =>
   value
@@ -10,39 +11,50 @@ const splitList = (value: string) =>
     .filter((item) => item.length > 1)
     .slice(0, 8);
 
-export const demoEmployeeTurn = (profile: Profile, stage: number, input: string): DemoResult => {
+const impactPattern = /\b(?:improved|increased|reduced|decreased|saved|grew|launched|delivered|achieved|cut|raised|resulted)\b|\b\d+\s*(?:%|percent|x|hours?|days?|users?|people)(?=\s|[.,;!?]|$)/i;
+const experiencePattern = /\b(?:at|for)\s+([A-Z][A-Za-z0-9& .-]{2,50})/;
+
+export const demoEmployeeTurn = (profile: Profile, history: Message[], input: string): DemoResult => {
   const clean = input.trim();
   const next = structuredClone(profile);
-  let reply: string;
 
-  if (stage === 0) {
+  if (!next.headline) {
     next.headline = clean;
-    reply = `That gives us a useful direction. What is one piece of work you are especially proud of, and what changed because of your contribution?`;
-  } else if (stage === 1) {
+  }
+
+  if (impactPattern.test(clean) && !next.achievements.includes(clean)) {
     next.achievements = [...next.achievements, clean].slice(-4);
-    next.summary = `${next.name} is a ${next.headline.toLowerCase()} with a record of turning responsibility into visible outcomes. ${clean}`;
-    reply = `There is a strong result in that story. Walk me through one relevant role: your title, the organization, the period, and the part only you owned.`;
-  } else if (stage === 2) {
+  }
+
+  const organization = clean.match(experiencePattern)?.[1]?.replace(/[,.].*$/, "").trim();
+  const hasRoleContext = /\b(?:engineer|designer|manager|director|lead|specialist|consultant|analyst|researcher|founder|officer|developer)\b/i.test(clean);
+  if (organization && hasRoleContext && !next.experiences.some((item) => item.impact.includes(clean))) {
     next.experiences = [
       ...next.experiences,
       {
         id: uid("exp"),
         role: next.headline || "Professional role",
-        organization: "Organization shared in conversation",
+        organization,
         period: "Period shared in conversation",
         impact: [clean],
       },
     ].slice(-4);
-    reply = `Good, your ownership is becoming clearer. Which three to five skills were decisive in producing that outcome? Separate tools from the human or strategic skills you relied on.`;
-  } else if (stage === 3) {
-    next.skills = splitList(clean).map((name) => ({
-      name: name.replace(/^(tools?|skills?):\s*/i, ""),
-      evidence: next.achievements[0] ?? "Evidence captured during the interview.",
-    }));
-    reply = `Now let’s make the profile useful for the right opportunity. What roles are you targeting, and do you prefer remote, hybrid, on-site, or flexible work?`;
-  } else if (stage === 4) {
-    const lower = clean.toLowerCase();
-    next.preferences.targetRoles = splitList(clean.replace(/remote|hybrid|on-site|onsite|flexible/gi, ""));
+  }
+
+  const list = splitList(clean);
+  const looksLikeSkills = list.length >= 3 && list.every((item) => item.split(/\s+/).length <= 5);
+  if (looksLikeSkills) {
+    const evidence = next.achievements[0] ?? clean;
+    for (const name of list) {
+      const normalized = name.replace(/^(tools?|skills?):\s*/i, "");
+      if (!next.skills.some((skill) => skill.name.toLowerCase() === normalized.toLowerCase())) {
+        next.skills.push({ name: normalized, evidence });
+      }
+    }
+  }
+
+  const lower = clean.toLowerCase();
+  if (/\b(?:remote|hybrid|on-site|onsite|flexible)\b/.test(lower)) {
     next.preferences.workStyle = lower.includes("remote")
       ? "Remote"
       : lower.includes("hybrid")
@@ -50,15 +62,25 @@ export const demoEmployeeTurn = (profile: Profile, stage: number, input: string)
         : lower.includes("on-site") || lower.includes("onsite")
           ? "On-site"
           : "Flexible";
-    reply = `Your profile has a clear through-line now. Review the evidence panel, correct anything that feels imprecise, then publish when it represents you well. What detail would you most like to sharpen?`;
-  } else {
-    next.summary = next.summary
-      ? `${next.summary} ${clean}`.slice(0, 700)
-      : clean;
-    reply = `I’ve kept that nuance in your narrative. Is there a specific claim, skill, or experience you want to make more concrete before publishing?`;
+    if (!next.preferences.targetRoles.length && hasRoleContext) {
+      next.preferences.targetRoles = splitList(clean.replace(/remote|hybrid|on-site|onsite|flexible/gi, ""));
+    }
   }
 
-  return { reply, profile: refreshProfile(next), nextStage: stage + 1 };
+  if (/\b(?:target|looking for|next role|open to|want to become)\b/i.test(clean)) {
+    const targets = splitList(clean.replace(/.*?(?:target|looking for|next role|open to|want to become)\s*:*/i, ""));
+    next.preferences.targetRoles = [...new Set([...next.preferences.targetRoles, ...targets])].slice(0, 6);
+  }
+
+  if (next.headline && next.achievements.length) {
+    next.summary = `${next.name} is a ${next.headline.toLowerCase()}. Evidence shared in the interview includes: ${next.achievements[0]}`.slice(0, 700);
+  }
+
+  const updated = refreshProfile(next);
+  const assessment = assessInterview(updated, clean);
+  const reply = planNextQuestion(assessment, updated, history, clean);
+
+  return { reply, profile: updated };
 };
 
 export const demoEmployerTurn = (profile: Profile, question: string) => {

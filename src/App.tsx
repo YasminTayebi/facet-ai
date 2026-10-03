@@ -150,10 +150,10 @@ function StartProfile({ health, onStarted }: { health: Health; onStarted: (view:
           <label className="consent-box">
             <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />
             <span className="custom-check">{consent && <Check size={13} />}</span>
-            <span><strong>Use hosted AI for this conversation</strong><small>My professional profile and messages will be sent to the configured Hugging Face inference provider. I can continue in private demo mode without this.</small></span>
+            <span><strong>Use hosted AI for this conversation</strong><small>My professional profile and messages will be sent to the configured Hugging Face inference provider. I can continue in private adaptive mode without this.</small></span>
           </label>
         ) : (
-          <div className="demo-notice"><ShieldCheck size={18} /><span><strong>Private demo mode</strong>No external AI is configured, so this conversation stays on this server.</span></div>
+          <div className="demo-notice"><ShieldCheck size={18} /><span><strong>Private adaptive mode</strong>The evidence-gap planner adapts each follow-up locally, so this conversation stays on this server.</span></div>
         )}
         {error && <p className="form-error">{error}</p>}
         <button className="button primary wide" disabled={loading || name.trim().length < 2}>
@@ -208,6 +208,7 @@ function EmployeeWorkspace({ view, setView }: { view: SessionView; setView: (vie
   const [sending, setSending] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState("");
+  const [agentFocus, setAgentFocus] = useState(view.profile.headline ? "impact" : "identity");
   const bottomRef = useRef<HTMLDivElement>(null);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [view.session.messages, sending]);
 
@@ -219,6 +220,7 @@ function EmployeeWorkspace({ view, setView }: { view: SessionView; setView: (vie
     try {
       const result = await api.message(view.session.id, message);
       setView({ session: result.session, profile: result.profile });
+      if (result.assessment?.nextFocus) setAgentFocus(result.assessment.nextFocus);
     } catch (reason) {
       setDraft(message);
       setError(reason instanceof Error ? reason.message : "Could not send the message");
@@ -236,8 +238,8 @@ function EmployeeWorkspace({ view, setView }: { view: SessionView; setView: (vie
     <div className="workspace">
       <section className="chat-pane">
         <div className="chat-head">
-          <div className="agent-identity"><div className="agent-avatar"><Sparkles size={19} /></div><div><strong>Facet guide</strong><span><i /> {view.session.mode === "hosted" ? "Hosted AI" : "Guided demo"}</span></div></div>
-          <span className="conversation-label">Private conversation</span>
+          <div className="agent-identity"><div className="agent-avatar"><Sparkles size={19} /></div><div><strong>Facet guide</strong><span><i /> {view.session.mode === "hosted" ? "LangGraph + hosted model" : "LangGraph adaptive planner"}</span></div></div>
+          <div className="chat-context"><span className="agent-focus"><Target size={12} /> Current focus: {agentFocus}</span><span className="conversation-label">Private conversation</span></div>
         </div>
         <div className="messages" aria-live="polite">
           <div className="date-divider">Today</div>

@@ -14,7 +14,7 @@ The product contains two clearly separated journeys:
 1. **Professional journey:** a conversational agent builds a structured profile from the user's answers. The profile stays private until the user explicitly publishes it.
 2. **Hiring-team journey:** employers search published profiles, review claims with supporting context, and ask questions that are answered only from the selected profile.
 
-Facet can use hosted inference through Hugging Face without downloading model weights. It also includes a deterministic demo engine, so every important product flow works without an API token or usage charges.
+Facet can use hosted inference through Hugging Face without downloading model weights. It also includes a local adaptive evidence planner, so every important product flow works without an API token or usage charges.
 
 ## Product goals
 
@@ -56,9 +56,21 @@ Facet Scout is explicitly prevented from making hiring decisions or inferring pr
 
 ### Demo mode
 
-When no hosted API token is configured, or when the user does not consent to hosted processing, the application uses a deterministic demo agent. It guides the same profile-building stages and updates the same domain model.
+When no hosted API token is configured, or when the user does not consent to hosted processing, the application uses a local adaptive planner. It examines the current evidence gaps and the latest answer before choosing a follow-up. It reacts specifically to metrics, leadership, vague claims, skill lists, and unclear ownership.
 
-Demo mode is intentionally identified in the interface. It is not presented as model intelligence. This provides a reliable presentation path while keeping the hosted integration optional.
+Local mode is intentionally identified in the interface. It provides a reliable presentation path while keeping hosted inference optional.
+
+## Intelligence upgrade
+
+The employee agent is orchestrated as a LangGraph workflow rather than a fixed question sequence:
+
+1. Assess seven evidence dimensions.
+2. Route to hosted inference or the local adaptive planner.
+3. Execute one or more validated tools when needed.
+4. Apply a response-quality gate.
+5. Save thread-specific graph memory.
+
+The quality gate removes exposed model reasoning, limits the response to one main question, avoids substantially repeated questions, and caps response length. Hosted failures use a retry policy before the configured local fallback is applied.
 
 ## Agent and prompt strategy
 
@@ -78,9 +90,9 @@ The interviewer policy establishes the following behavior:
 - Keep publication under the user's control.
 - Use a structured tool whenever new profile facts are available.
 
-The hosted model can call `update_profile`. Its arguments are parsed and validated with Zod before the application changes any data. A failed validation returns a tool error and does not mutate the profile.
+The hosted model can call `update_profile` and the read-only `assess_profile_gaps` tool. Its update arguments are parsed and validated with Zod before the application changes any data. A failed validation returns a tool error and does not mutate the profile.
 
-After a successful tool call, the model receives a concise result and produces the next conversational response. This separates natural-language generation from state mutation and makes agent behavior easier to test and audit.
+The model can make several tool decisions in one turn. After a tool call, it can inspect the result, correct an invalid call, assess the remaining evidence gaps, or produce the next conversational response. This separates natural-language generation from state mutation and makes agent behavior easier to test and audit.
 
 The employer prompt has a different role and policy. It receives only one published profile and the employer's question. It must remain grounded in that profile, label reasonable inference, identify missing evidence, and avoid autonomous employment decisions.
 
@@ -89,13 +101,16 @@ The employer prompt has a different role and policy. It receives only one publis
 ```mermaid
 flowchart LR
     UI[React interface] --> API[Express API]
-    API --> AGENT[Agent orchestration]
-    AGENT -->|Consent and token| HF[Hugging Face router]
-    AGENT -->|No consent or fallback| DEMO[Deterministic demo agent]
+    API --> AGENT[LangGraph workflow]
+    AGENT --> GAP[Evidence-gap assessment]
+    GAP -->|Consent and token| HF[Hugging Face tool loop]
+    GAP -->|No consent or fallback| DEMO[Adaptive local planner]
     HF --> TOOLS[Validated profile tools]
     DEMO --> TOOLS
-    TOOLS --> STORE[Profile repository]
+    TOOLS --> QUALITY[Response quality gate]
+    QUALITY --> STORE[Profile repository]
     STORE --> UI
+    MCP[MCP server] --> STORE
 ```
 
 ### Frontend
@@ -111,6 +126,7 @@ The frontend includes landing, onboarding, conversation, live-profile, talent-se
 ### Backend
 
 - Express 5
+- LangGraph with conditional routing, retry policy, and thread memory
 - Zod request and tool validation
 - Helmet security headers
 - CORS support
@@ -118,6 +134,16 @@ The frontend includes landing, onboarding, conversation, live-profile, talent-se
 - Basic in-memory request limiting
 
 The backend exposes routes for health checks, profiles, employee sessions, messages, publication, and employer questions.
+
+### MCP integration
+
+Facet includes a standard stdio MCP server built with the official TypeScript SDK. It exposes only published information through three read-only tools:
+
+- `search_published_profiles`
+- `get_profile_evidence`
+- `analyze_profile_evidence`
+
+It also exposes the `facet://methodology/evidence-first` resource. This allows compatible assistants to discover profile evidence and prepare better interview questions without write access. Draft profiles are rejected by every MCP lookup.
 
 ### Persistence
 
@@ -160,6 +186,9 @@ The project includes automated coverage for:
 - Profile initialization and completion calculation
 - Validated tool-based profile updates
 - Demo conversation progression
+- Adaptive follow-ups for vague claims, leadership, quantified outcomes, and ownership
+- LangGraph routing and evidence assessment through the API
+- MCP tool discovery, published-profile search, and gap analysis
 - Employer answers grounded in profile evidence
 - Employee session creation
 - Conversation and profile updates
@@ -178,7 +207,7 @@ npm run build
 
 At delivery:
 
-- 10 automated tests passed.
+- 17 automated tests passed across profile logic, adaptive interviews, hosted tool loops, HTTP routes, and MCP tools.
 - The production client built successfully.
 - The production server passed an HTTP smoke test.
 - The production dependency audit reported zero known vulnerabilities.
@@ -206,7 +235,7 @@ npm install
 
 Node.js 20 or newer is required.
 
-### 3. Start in demo mode
+### 3. Start in local adaptive mode
 
 ```bash
 npm run dev
@@ -214,13 +243,13 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173).
 
-No API token is needed. The application will identify itself as using the guided demo agent.
+No API token is needed. The application will identify itself as using the LangGraph adaptive planner.
 
 ### 4. Use the professional journey
 
 1. Select **Build my profile**.
 2. Enter a full name.
-3. Leave hosted AI disabled to use demo mode, or enable it after configuring a token.
+3. Leave hosted AI disabled to use local adaptive mode, or enable it after configuring a token.
 4. Answer one question at a time.
 5. Use **Try a sample answer** when demonstrating the product quickly.
 6. Watch the live profile panel update.
@@ -238,7 +267,7 @@ Publishing makes the profile visible in the application's employer search. It do
 5. Review the summary, experience, evidence, and skills.
 6. Ask Facet Scout a suggested question or write a custom question.
 
-In demo mode, Scout uses a deterministic evidence-grounded response. With hosted AI configured, select the hosted-AI consent control before sending a question.
+In local mode, Scout uses an evidence-grounded response generator. With hosted AI configured, select the hosted-AI consent control before sending a question.
 
 ## How to enable hosted AI
 
@@ -266,7 +295,7 @@ Restart the development server after changing `.env`:
 npm run dev
 ```
 
-The hosted agent is used only when the token exists and the user selects the consent option. If the hosted request fails and fallback is enabled, the session changes to guided demo mode.
+The hosted agent is used only when the token exists and the user selects the consent option. If the hosted request still fails after graph retries and fallback is enabled, the session changes to local adaptive mode.
 
 ## Production use
 
@@ -293,6 +322,7 @@ The Docker application is also available at [http://localhost:8787](http://local
 | Command | Purpose |
 | --- | --- |
 | `npm run dev` | Start the API and frontend development servers |
+| `npm run mcp` | Start the read-only MCP server over stdio |
 | `npm test` | Run automated tests |
 | `npm run typecheck` | Validate TypeScript types |
 | `npm run lint` | Run static code checks |
@@ -312,6 +342,16 @@ The prototype intentionally does not yet include:
 - Distributed rate limiting
 - Administrative moderation tools
 
+### Connecting the MCP server
+
+Run the server directly:
+
+```bash
+npm run mcp
+```
+
+For an MCP-compatible client, copy `mcp.json.example` and replace the placeholders with absolute paths to the repository and profile data file. The integration is intended for trusted local use until client authentication is added.
+
 The project should therefore be demonstrated locally or with synthetic data until those controls are implemented.
 
 ## Recommended next steps
@@ -328,4 +368,4 @@ For a production evolution, the recommended order is:
 
 ## Conclusion
 
-Facet demonstrates a complete agentic product loop rather than a chat interface alone: conversation produces validated structured state, that state drives a separate user journey, and privacy controls determine when data becomes visible or leaves the server. The project can be demonstrated immediately in demo mode and upgraded to hosted model intelligence with one environment variable and explicit user consent.
+Facet demonstrates a complete agentic product loop rather than a chat interface alone: conversation produces validated structured state, that state drives a separate user journey, and privacy controls determine when data becomes visible or leaves the server. The project can be demonstrated immediately in local adaptive mode and upgraded to hosted model intelligence with one environment variable and explicit user consent.

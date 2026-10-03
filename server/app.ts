@@ -3,9 +3,10 @@ import cors from "cors";
 import helmet from "helmet";
 import { z } from "zod";
 import type { Message, Session } from "../shared/types.js";
+import { runEmployeeAgent } from "./agent-graph.js";
 import { config } from "./config.js";
-import { demoEmployeeTurn, demoEmployerTurn } from "./demo-agent.js";
-import { hostedEmployeeTurn, hostedEmployerTurn } from "./huggingface.js";
+import { demoEmployerTurn } from "./demo-agent.js";
+import { hostedEmployerTurn } from "./huggingface.js";
 import { createProfile, refreshProfile, uid } from "./profile.js";
 import { ProfileStore } from "./store.js";
 
@@ -124,30 +125,28 @@ export const createApp = (store = new ProfileStore(config.dataFile)) => {
 
       const userMessage = newMessage("user", input.message);
       session.messages.push(userMessage);
-      let turn;
-      if (session.mode === "hosted") {
-        try {
-          turn = await hostedEmployeeTurn(
-            { token: config.hfToken, model: config.hfModel, baseUrl: config.hfBaseUrl },
-            profile,
-            session.messages,
-          );
-        } catch (error) {
-          if (!config.allowDemoFallback) throw error;
-          const demo = demoEmployeeTurn(profile, session.stage, input.message);
-          turn = { reply: demo.reply, profile: demo.profile };
-          session.mode = "demo";
-        }
-      } else {
-        const demo = demoEmployeeTurn(profile, session.stage, input.message);
-        turn = { reply: demo.reply, profile: demo.profile };
-      }
+      const turn = await runEmployeeAgent({
+        sessionId: session.id,
+        profile,
+        history: session.messages,
+        latestInput: input.message,
+        stage: session.stage,
+        mode: session.mode,
+      });
 
       session.stage += 1;
+      session.mode = turn.mode;
       session.messages.push(newMessage("assistant", turn.reply));
       store.saveSession(session);
       const savedProfile = await store.saveProfile(turn.profile);
-      response.json({ reply: turn.reply, profile: savedProfile, session, mode: session.mode });
+      response.json({
+        reply: turn.reply,
+        profile: savedProfile,
+        session,
+        mode: session.mode,
+        assessment: turn.assessment,
+        fallbackReason: turn.fallbackReason || undefined,
+      });
     }),
   );
 

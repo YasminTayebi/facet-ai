@@ -25,7 +25,11 @@ export const api = {
     }),
   session: (id: string) => request<SessionView>(`/api/sessions/${id}`),
   message: (id: string, message: string) =>
-    request<AgentReply & { session: SessionView["session"] }>(`/api/sessions/${id}/messages`, {
+    request<AgentReply & {
+      session: SessionView["session"];
+      assessment?: { nextFocus: string; completeness: number };
+      fallbackReason?: string;
+    }>(`/api/sessions/${id}/messages`, {
       method: "POST",
       body: JSON.stringify({ message }),
     }),
@@ -37,4 +41,3 @@ export const api = {
       body: JSON.stringify({ profileId, question, consentToHostedAI }),
     }),
 };
-

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Message, Profile } from "../shared/types.js";
+import { assessInterview, type InterviewAssessment } from "./interview-intelligence.js";
 import { refreshProfile, uid } from "./profile.js";
 import { EMPLOYEE_SYSTEM_PROMPT, EMPLOYER_SYSTEM_PROMPT, employerPrompt } from "./prompts.js";
 
@@ -106,6 +107,22 @@ const updateTool = {
   },
 };
 
+const assessGapsTool = {
+  type: "function",
+  function: {
+    name: "assess_profile_gaps",
+    description:
+      "Inspect which evidence dimension is weakest before choosing the next follow-up. This tool is read-only and should be used when the best interview direction is unclear.",
+    parameters: {
+      type: "object",
+      additionalProperties: false,
+      properties: {},
+    },
+  },
+};
+
+const interviewTools = [updateTool, assessGapsTool];
+
 const mergeUnique = (existing: string[], incoming: string[]) => [...new Set([...existing, ...incoming])];
 
 export const applyProfilePatch = (profile: Profile, rawArguments: string): Profile => {
@@ -174,32 +191,48 @@ export const hostedEmployeeTurn = async (
   settings: HuggingFaceConfig,
   profile: Profile,
   history: Message[],
+  assessment?: InterviewAssessment,
 ) => {
+  const latestUserInput = [...history].reverse().find((message) => message.role === "user")?.content ?? "";
   const messages: ChatMessage[] = [
     { role: "system", content: EMPLOYEE_SYSTEM_PROMPT },
     { role: "system", content: `CURRENT PROFILE JSON:\n${JSON.stringify(profile)}` },
+    {
+      role: "system",
+      content: `CURRENT EVIDENCE-GAP ASSESSMENT:\n${JSON.stringify(assessment ?? assessInterview(profile, latestUserInput))}`,
+    },
     ...historyToMessages(history),
   ];
-  const first = await requestCompletion(settings, messages, [updateTool], "auto");
   let nextProfile = profile;
 
-  if (first.tool_calls?.length) {
-    messages.push({ role: "assistant", content: first.content ?? null, tool_calls: first.tool_calls });
-    for (const call of first.tool_calls) {
+  for (let iteration = 0; iteration < 4; iteration += 1) {
+    const response = await requestCompletion(settings, messages, interviewTools, iteration === 3 ? "none" : "auto");
+    if (!response.tool_calls?.length) {
+      return { reply: response.content?.trim() || "Tell me a little more about that.", profile: nextProfile };
+    }
+    messages.push({ role: "assistant", content: response.content ?? null, tool_calls: response.tool_calls });
+    for (const call of response.tool_calls) {
       let result: Record<string, unknown>;
       try {
-        nextProfile = applyProfilePatch(nextProfile, call.function.arguments);
-        result = { success: true, completion: nextProfile.completion };
+        if (call.function.name === "update_profile") {
+          nextProfile = applyProfilePatch(nextProfile, call.function.arguments);
+          result = {
+            success: true,
+            completion: nextProfile.completion,
+            updatedProfile: nextProfile,
+          };
+        } else if (call.function.name === "assess_profile_gaps") {
+          result = { success: true, assessment: assessInterview(nextProfile, latestUserInput) };
+        } else {
+          result = { success: false, error: `Unknown tool: ${call.function.name}` };
+        }
       } catch (error) {
-        result = { success: false, error: error instanceof Error ? error.message : "Invalid profile update" };
+        result = { success: false, error: error instanceof Error ? error.message : "Invalid tool call" };
       }
       messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
     }
-    const final = await requestCompletion(settings, messages, [updateTool], "none");
-    return { reply: final.content?.trim() || "What would you like to add next?", profile: nextProfile };
   }
-
-  return { reply: first.content?.trim() || "Tell me a little more about that.", profile: nextProfile };
+  return { reply: "What part of your experience would you most like to make more concrete?", profile: nextProfile };
 };
 
 export const hostedEmployerTurn = async (
@@ -213,4 +246,3 @@ export const hostedEmployerTurn = async (
   ]);
   return response.content?.trim() || "The profile does not contain enough evidence to answer that yet.";
 };
-

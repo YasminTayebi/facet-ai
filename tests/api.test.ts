@@ -26,7 +26,8 @@ describe("Facet API", () => {
       .send({ message: "Product manager for complex healthcare platforms" });
     expect(response.status).toBe(200);
     expect(response.body.profile.headline).toContain("Product manager");
-    expect(response.body.reply).toContain("proud");
+    expect(response.body.assessment.nextFocus).toBe("impact");
+    expect(response.body.reply).toMatch(/achievement|result|outcome/i);
   });
 
   it("exposes only published profiles in employer search", async () => {
@@ -57,4 +58,3 @@ describe("Facet API", () => {
     expect(response.body.reply.length).toBeGreaterThan(40);
   });
 });
-

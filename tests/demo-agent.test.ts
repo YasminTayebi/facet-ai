@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Message } from "../shared/types.js";
 import { demoEmployeeTurn, demoEmployerTurn } from "../server/demo-agent.js";
 import { createProfile } from "../server/profile.js";
 import { seedProfiles } from "../server/seed.js";
@@ -6,11 +7,20 @@ import { seedProfiles } from "../server/seed.js";
 describe("demo agent", () => {
   it("builds profile facets across a guided conversation", () => {
     let profile = createProfile("Mina Shah");
-    profile = demoEmployeeTurn(profile, 0, "Product manager for complex healthcare platforms").profile;
-    profile = demoEmployeeTurn(profile, 1, "I reduced patient onboarding time by 40%.").profile;
-    profile = demoEmployeeTurn(profile, 2, "Senior PM at HealthCo, 2022 to now; I led the workflow redesign.").profile;
-    profile = demoEmployeeTurn(profile, 3, "Discovery, analytics, stakeholder facilitation, Figma").profile;
-    profile = demoEmployeeTurn(profile, 4, "Lead Product Manager, hybrid").profile;
+    const history: Message[] = [];
+    const runTurn = (input: string) => {
+      history.push({ id: `user-${history.length}`, role: "user", content: input, createdAt: new Date().toISOString() });
+      const result = demoEmployeeTurn(profile, history, input);
+      profile = result.profile;
+      history.push({ id: `assistant-${history.length}`, role: "assistant", content: result.reply, createdAt: new Date().toISOString() });
+      return result.reply;
+    };
+
+    runTurn("Product manager for complex healthcare platforms");
+    runTurn("I reduced patient onboarding time by 40%.");
+    runTurn("Senior Product Manager at HealthCo, 2022 to now; I led the workflow redesign.");
+    runTurn("Discovery, analytics, stakeholder facilitation, Figma");
+    runTurn("Lead Product Manager, hybrid");
 
     expect(profile.headline).toContain("Product manager");
     expect(profile.achievements).toHaveLength(1);
@@ -20,10 +30,32 @@ describe("demo agent", () => {
     expect(profile.completion).toBeGreaterThanOrEqual(50);
   });
 
+  it("follows up on vague claims with a request for concrete evidence", () => {
+    const profile = createProfile("Mina Shah");
+    const reply = demoEmployeeTurn(profile, [], "I am a strategic leader and strong communicator").reply;
+    expect(reply).toContain("specific situation");
+    expect(reply).toContain("personally did");
+  });
+
+  it("adapts a leadership follow-up to decisions and alignment", () => {
+    const profile = createProfile("Mina Shah");
+    profile.headline = "Engineering manager";
+    const reply = demoEmployeeTurn(profile, [], "I led a cross-functional platform migration").reply;
+    expect(reply).toContain("difficult decision");
+    expect(reply).toContain("align");
+  });
+
+  it("uses metrics to investigate ownership and measurement", () => {
+    const profile = createProfile("Mina Shah");
+    profile.headline = "Product manager";
+    const reply = demoEmployeeTurn(profile, [], "The new workflow reduced onboarding time by 40%").reply;
+    expect(reply).toContain("specifically your responsibility");
+    expect(reply).toContain("measured");
+  });
+
   it("grounds employer answers in profile evidence", () => {
     const reply = demoEmployerTurn(seedProfiles[1], "What are the strongest skills?");
     expect(reply).toContain("Python");
     expect(reply).toContain("evidence");
   });
 });
-

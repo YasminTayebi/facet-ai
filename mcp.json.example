@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "facet": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "/absolute/path/to/facet-ai/server/mcp.ts"
+      ],
+      "env": {
+        "DATA_FILE": "/absolute/path/to/facet-ai/data/profiles.json"
+      }
+    }
+  }
+}
