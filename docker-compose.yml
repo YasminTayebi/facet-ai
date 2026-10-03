@@ -1,0 +1,17 @@
+services:
+  facet:
+    build: .
+    ports:
+      - "8787:8787"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - DATA_FILE=/app/data/profiles.json
+    volumes:
+      - facet-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  facet-data:
+
