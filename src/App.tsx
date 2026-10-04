@@ -28,7 +28,7 @@ function Brand({ onClick }: { onClick: () => void }) {
   return (
     <button className="brand" onClick={onClick} aria-label="Facet home">
       <span className="brand-mark"><span /></span>
-      <span>facet</span>
+      <span>Facet</span>
     </button>
   );
 }
@@ -52,7 +52,7 @@ function Home({ onNavigate }: { onNavigate: (screen: Screen) => void }) {
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow"><Sparkles size={15} /> Conversational career intelligence</div>
-          <h1>More than a résumé.<br /><em>A profile with proof.</em></h1>
+          <h1>More than a resume.<br /><em>A profile with proof.</em></h1>
           <p className="hero-lead">
             Facet asks the questions that uncover how people really work. It then turns their answers into clear, evidence-rich profiles.
           </p>
@@ -132,7 +132,7 @@ function StartProfile({ health, onStarted }: { health: Health; onStarted: (view:
     <div className="onboarding-shell">
       <div className="onboarding-copy">
         <div className="eyebrow"><MessageCircleMore size={15} /> Your story, in your words</div>
-        <h1>Let’s build the profile a résumé can’t.</h1>
+        <h1>Let’s build the profile a resume can’t.</h1>
         <p>There are no perfect answers. Facet will listen, find the strongest thread, and ask what matters next.</p>
         <ol className="steps-list">
           <li><span>01</span><div><strong>Talk it through</strong><p>Answer one focused question at a time.</p></div></li>
@@ -145,7 +145,7 @@ function StartProfile({ health, onStarted }: { health: Health; onStarted: (view:
         <span className="form-kicker">Start with the simple part</span>
         <h2>What should we call you?</h2>
         <label className="field-label" htmlFor="name">Full name</label>
-        <input id="name" autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Yasmin Tayebi" minLength={2} required />
+        <input id="name" autoFocus value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Amara Okafor" minLength={2} required />
         {health.hostedAI ? (
           <label className="consent-box">
             <input type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} />

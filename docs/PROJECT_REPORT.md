@@ -7,7 +7,7 @@
 
 ## Executive summary
 
-Facet is an evidence-first conversational career-profile application. It replaces the usual résumé form with a guided interview that helps a professional explain what they did, why it mattered, and which skills produced the result. The same structured evidence becomes a focused exploration experience for hiring teams.
+Facet is an evidence-first conversational career-profile application. It replaces the usual resume form with a guided interview that helps a professional explain what they did, why it mattered, and which skills produced the result. The same structured evidence becomes a focused exploration experience for hiring teams.
 
 The product contains two clearly separated journeys:
 
@@ -20,7 +20,7 @@ Facet can use hosted inference through Hugging Face without downloading model we
 
 The implementation was designed around five goals:
 
-- Create a natural conversation instead of a static résumé questionnaire.
+- Create a natural conversation instead of a static resume questionnaire.
 - Connect professional claims to concrete evidence.
 - Keep the professional and employer experiences visibly distinct.
 - Make privacy and user control part of the product flow.

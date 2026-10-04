@@ -2,7 +2,7 @@
 
 **Careers, in full dimension.** Facet is an evidence-first conversational profile agent. It helps professionals turn lived experience into a clear profile, then gives hiring teams a grounded way to explore the evidence behind it.
 
-Facet deliberately avoids the usual résumé pattern of collecting fields. The agent asks one adaptive question at a time, challenges vague claims, records structured evidence through tool calls, and leaves publication under the profile owner's control.
+Facet deliberately avoids the usual resume pattern of collecting fields. The agent asks one adaptive question at a time, challenges vague claims, records structured evidence through tool calls, and leaves publication under the profile owner's control.
 
 ## What makes it different
 
