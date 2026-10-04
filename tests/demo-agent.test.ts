@@ -53,6 +53,41 @@ describe("demo agent", () => {
     expect(reply).toContain("measured");
   });
 
+  it("rejects meaningless input without changing the profile or praising it", () => {
+    const profile = createProfile("Mina Shah");
+    const result = demoEmployeeTurn(profile, [], "asdf qwerty banana");
+
+    expect(result.profile).toEqual(profile);
+    expect(result.reply).toContain("could not connect");
+    expect(result.reply).toContain("real work example");
+    expect(result.reply).not.toMatch(/wow|awesome|amazing|great|impressive/i);
+  });
+
+  it("does not advance after an off-topic conversational answer", () => {
+    const profile = createProfile("Mina Shah");
+    const result = demoEmployeeTurn(profile, [], "My cat likes sleeping in the sunny garden");
+
+    expect(result.profile.headline).toBe("");
+    expect(result.reply).toContain("could not connect");
+  });
+
+  it("accepts concise professional answers and contextual metrics", () => {
+    const profile = createProfile("Mina Shah");
+    const role = demoEmployeeTurn(profile, [], "Product manager");
+    expect(role.profile.headline).toBe("Product manager");
+
+    const history: Message[] = [
+      {
+        id: "assistant-1",
+        role: "assistant",
+        content: "How much time did the change save?",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    const metric = demoEmployeeTurn(role.profile, history, "About 6 months");
+    expect(metric.reply).not.toContain("could not connect");
+  });
+
   it("grounds employer answers in profile evidence", () => {
     const reply = demoEmployerTurn(seedProfiles[1], "What are the strongest skills?");
     expect(reply).toContain("Python");

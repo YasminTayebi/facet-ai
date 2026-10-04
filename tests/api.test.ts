@@ -30,6 +30,22 @@ describe("Facet API", () => {
     expect(response.body.reply).toMatch(/achievement|result|outcome/i);
   });
 
+  it("does not advance or update the profile for irrelevant input", async () => {
+    const app = setup();
+    const created = await request(app).post("/api/sessions").send({ name: "Mina Shah" });
+    const sessionId = created.body.session.id as string;
+    const response = await request(app)
+      .post(`/api/sessions/${sessionId}/messages`)
+      .send({ message: "asdf qwerty banana" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.session.stage).toBe(0);
+    expect(response.body.profile.headline).toBe("");
+    expect(response.body.assessment.inputQuality).toEqual({ isRelevant: false, reason: "off_topic" });
+    expect(response.body.reply).toContain("could not connect");
+    expect(response.body.reply).not.toMatch(/wow|awesome|amazing|great|impressive/i);
+  });
+
   it("exposes only published profiles in employer search", async () => {
     const response = await request(setup()).get("/api/profiles?q=evaluation");
     expect(response.status).toBe(200);

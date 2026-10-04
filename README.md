@@ -7,6 +7,7 @@ Facet deliberately avoids the usual résumé pattern of collecting fields. The a
 ## What makes it different
 
 - **Adaptive employee interview:** A LangGraph evidence-gap planner selects follow-ups from the actual conversation instead of following a static sequence.
+- **Relevance-aware recovery:** Meaningless, off-topic, or empty answers do not update the profile or advance the interview. The agent asks neutrally for a work-related rephrasing.
 - **Evidence over adjectives:** Skills are stored with context; achievements capture ownership and outcome.
 - **Separate employer journey:** Published profiles can be searched and explored through profile-grounded Q&A.
 - **Privacy by design:** Drafts never appear in search, hosted inference requires consent, and the token stays server-side.
@@ -57,7 +58,9 @@ No model weights are installed or downloaded. Calls go to `https://router.huggin
 flowchart LR
     UI[React interface] --> API[Express API]
     API --> GRAPH[LangGraph workflow]
-    GRAPH --> GAP[Evidence-gap assessment]
+    GRAPH --> INPUT[Input relevance gate]
+    INPUT -->|irrelevant| RECOVER[Neutral recovery]
+    INPUT -->|relevant| GAP[Evidence-gap assessment]
     GAP -->|consent + token| HF[Hugging Face tool loop]
     GAP -->|no token or fallback| DEMO[Adaptive local planner]
     HF --> TOOLS[Validated profile tools]

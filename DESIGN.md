@@ -8,11 +8,12 @@ A useful professional profile is not a list of claims. It is a set of claims con
 
 Each employee turn runs through an explicit LangGraph state machine:
 
-1. `assess_evidence` scores identity, impact, ownership, experience, skills, goals, and preferences.
-2. A conditional edge selects hosted reasoning or the local adaptive planner.
-3. The hosted path can make several tool calls and recover from invalid tool arguments.
-4. `quality_gate` removes exposed reasoning, limits the reply to one question, prevents repetition, and caps length.
-5. A `MemorySaver` checkpointer maintains thread-specific graph state.
+1. `assess_evidence` validates input relevance and scores identity, impact, ownership, experience, skills, goals, and preferences.
+2. Irrelevant input routes to `recover_irrelevant_input`, which leaves the profile and interview stage unchanged and requests a work-related rephrasing without praise.
+3. Relevant input routes to hosted reasoning or the local adaptive planner.
+4. The hosted path can make several tool calls and recover from invalid tool arguments.
+5. `quality_gate` removes exposed reasoning, limits the reply to one question, prevents repetition, and caps length.
+6. A `MemorySaver` checkpointer maintains thread-specific graph state.
 
 The employee agent receives three inputs on each turn:
 
@@ -41,7 +42,7 @@ The agent aims to establish seven evidence dimensions while remaining adaptive:
 - Desired next role
 - Working preferences
 
-The local planner is not a fixed questionnaire. It detects quantified results, leadership language, vague adjectives, skill lists, and ownership gaps. It prioritizes a contextual follow-up, checks the transcript for similar earlier questions, and otherwise chooses a fresh question for the weakest evidence dimension.
+The local planner is not a fixed questionnaire. It first rejects empty, meaningless, and off-topic input without mutating profile data. For relevant input, it detects quantified results, leadership language, vague adjectives, skill lists, and ownership gaps. It prioritizes a contextual follow-up, checks the transcript for similar earlier questions, and otherwise chooses a fresh question for the weakest evidence dimension.
 
 These are not asked as a visible questionnaire. The system chooses the highest-value missing detail after each turn. Vague statements trigger a request for an example; quantified claims trigger a question about baseline or measurement.
 

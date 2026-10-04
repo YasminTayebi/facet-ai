@@ -28,13 +28,55 @@ export interface InterviewAssessment {
     containsVagueClaim: boolean;
     containsSkillList: boolean;
   };
+  inputQuality: InputQuality;
+}
+
+export interface InputQuality {
+  isRelevant: boolean;
+  reason: "professional_evidence" | "contextual_answer" | "too_short" | "non_answer" | "off_topic";
 }
 
 const metricPattern = /\b\d+(?:\.\d+)?\s*(?:%|percent|x|hours?|days?|weeks?|months?|users?|people|customers?|euros?|dollars?|€|\$)(?=\s|[.,;!?]|$)/i;
 const leadershipPattern = /\b(?:led|lead|leadership|managed|mentored|coached|directed|stakeholders?|cross-functional|team)\b/i;
 const vaguePattern = /\b(?:strategic|innovative|hardworking|results-driven|excellent|strong communicator|team player|leadership skills)\b/i;
+const professionalPattern = /\b(?:work|job|career|role|company|organization|team|project|product|customer|client|user|business|manager|management|engineer|engineering|developer|designer|design|analyst|analysis|research|researcher|consultant|director|lead|leadership|specialist|founder|officer|marketing|sales|finance|operations|education|healthcare|platform|system|software|data|process|strategy|stakeholder|colleague|skill|responsib|experience|achievement|impact|result|goal|remote|hybrid|on-site|onsite|built|created|designed|developed|implemented|launched|delivered|improved|increased|reduced|saved|grew|managed|mentored|coached|owned|decided|solved|coordinated|facilitated|negotiated)\w*\b/i;
+const contextualAnswerPattern = /\b(?:yes|no|partly|approximately|about|around|because|through|using|with|without|during|before|after)\b/i;
+const nonAnswerPattern = /^(?:i\s+(?:do not|don't)\s+know|not sure|nothing|none|no idea|n\/a|na|test|testing|hello|hi|hey|blah+|whatever|skip|pass|idk|asdf\w*|qwerty\w*)[.!?]*$/i;
+const timeOrMetricPattern = /(?:\b\d+(?:\.\d+)?\s*(?:%|percent|x|hours?|days?|weeks?|months?|years?|users?|people|customers?|euros?|dollars?|€|\$)\b|\b(?:days?|weeks?|months?|years?)\b)/i;
 
 const dimensionOrder: EvidenceDimension[] = ["identity", "impact", "ownership", "experience", "skills", "goals", "preferences"];
+
+const lexicalWords = (value: string) => value.match(/[\p{L}\p{N}][\p{L}\p{N}+#.-]*/gu) ?? [];
+
+export const assessInputQuality = (input: string, history: Message[] = []): InputQuality => {
+  const clean = input.trim();
+  const words = lexicalWords(clean);
+
+  if (!clean || words.length === 0 || nonAnswerPattern.test(clean)) {
+    return { isRelevant: false, reason: "non_answer" };
+  }
+
+  const hasProfessionalSignal = professionalPattern.test(clean);
+  const hasMetricOrTime = metricPattern.test(clean) || timeOrMetricPattern.test(clean);
+  if (hasProfessionalSignal) return { isRelevant: true, reason: "professional_evidence" };
+
+  const previousQuestion = [...history].reverse().find((message) => message.role === "assistant")?.content ?? "";
+  const isShortContextualAnswer =
+    words.length <= 8 &&
+    (hasMetricOrTime || contextualAnswerPattern.test(clean)) &&
+    /\b(?:how|what|when|where|which|who|outcome|result|measure|period|location|arrangement)\b/i.test(previousQuestion);
+  if (isShortContextualAnswer) return { isRelevant: true, reason: "contextual_answer" };
+
+  if (words.length < 3) return { isRelevant: false, reason: "too_short" };
+  return { isRelevant: false, reason: "off_topic" };
+};
+
+export const irrelevantInputReply = (quality: InputQuality) => {
+  if (quality.reason === "non_answer" || quality.reason === "too_short") {
+    return "I do not have enough professional information in that response yet. Could you rephrase it with a role, action, skill, or result from your work?";
+  }
+  return "I could not connect that response to your professional profile. Could you answer with a real work example, such as what you did, why it mattered, or what changed?";
+};
 
 const scoreExperience = (profile: Profile) => {
   if (!profile.experiences.length) return 0;
@@ -51,7 +93,7 @@ const scoreOwnership = (profile: Profile) => {
   return 1;
 };
 
-export const assessInterview = (profile: Profile, latestInput = ""): InterviewAssessment => {
+export const assessInterview = (profile: Profile, latestInput = "", history: Message[] = []): InterviewAssessment => {
   const impactText = profile.achievements.join(" ");
   const evidencedSkills = profile.skills.filter((skill) => skill.evidence.trim().length >= 20).length;
   const scores: Record<EvidenceDimension, number> = {
@@ -100,6 +142,7 @@ export const assessInterview = (profile: Profile, latestInput = ""): InterviewAs
       containsVagueClaim: vaguePattern.test(latestInput),
       containsSkillList: latestInput.split(/,|;/).filter((part) => part.trim()).length >= 3,
     },
+    inputQuality: assessInputQuality(latestInput, history),
   };
 };
 

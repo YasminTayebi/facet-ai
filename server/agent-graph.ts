@@ -5,6 +5,7 @@ import { demoEmployeeTurn } from "./demo-agent.js";
 import { hostedEmployeeTurn } from "./huggingface.js";
 import {
   assessInterview,
+  irrelevantInputReply,
   planNextQuestion,
   questionWasAsked,
   type InterviewAssessment,
@@ -23,7 +24,13 @@ const InterviewState = Annotation.Root({
 });
 
 const assessEvidence = (state: typeof InterviewState.State) => ({
-  assessment: assessInterview(state.profile, state.latestInput),
+  assessment: assessInterview(state.profile, state.latestInput, state.history),
+});
+
+const recoverIrrelevantInput = (state: typeof InterviewState.State) => ({
+  reply: irrelevantInputReply(state.assessment.inputQuality),
+  profile: state.profile,
+  fallbackReason: "",
 });
 
 const runHostedInterview = async (state: typeof InterviewState.State) => {
@@ -71,7 +78,7 @@ const capWords = (reply: string, limit = 90) => {
 };
 
 const qualityGate = (state: typeof InterviewState.State) => {
-  const updatedAssessment = assessInterview(state.profile, state.latestInput);
+  const updatedAssessment = assessInterview(state.profile, state.latestInput, state.history);
   const planned = planNextQuestion(updatedAssessment, state.profile, state.history, state.latestInput);
   let reply = capWords(enforceSingleQuestion(cleanModelReasoning(state.reply)));
 
@@ -85,14 +92,20 @@ const checkpointer = new MemorySaver();
 
 const employeeGraph = new StateGraph(InterviewState)
   .addNode("assess_evidence", assessEvidence)
+  .addNode("recover_irrelevant_input", recoverIrrelevantInput)
   .addNode("hosted_interview", runHostedInterview, { retryPolicy: { maxAttempts: 2 } })
   .addNode("adaptive_demo", runDemoInterview)
   .addNode("quality_gate", qualityGate)
   .addEdge(START, "assess_evidence")
-  .addConditionalEdges("assess_evidence", (state) => state.mode, {
+  .addConditionalEdges("assess_evidence", (state) => {
+    if (!state.assessment.inputQuality.isRelevant) return "recover";
+    return state.mode;
+  }, {
+    recover: "recover_irrelevant_input",
     hosted: "hosted_interview",
     demo: "adaptive_demo",
   })
+  .addEdge("recover_irrelevant_input", END)
   .addEdge("hosted_interview", "quality_gate")
   .addEdge("adaptive_demo", "quality_gate")
   .addEdge("quality_gate", END)
@@ -111,7 +124,7 @@ export const runEmployeeAgent = async (input: EmployeeAgentInput) => {
   const result = await employeeGraph.invoke(
     {
       ...input,
-      assessment: assessInterview(input.profile, input.latestInput),
+      assessment: assessInterview(input.profile, input.latestInput, input.history),
       reply: "",
       fallbackReason: "",
     },
@@ -127,4 +140,3 @@ export const runEmployeeAgent = async (input: EmployeeAgentInput) => {
 };
 
 export const getEmployeeGraph = () => employeeGraph;
-

@@ -64,11 +64,13 @@ Local mode is intentionally identified in the interface. It provides a reliable 
 
 The employee agent is orchestrated as a LangGraph workflow rather than a fixed question sequence:
 
-1. Assess seven evidence dimensions.
-2. Route to hosted inference or the local adaptive planner.
-3. Execute one or more validated tools when needed.
-4. Apply a response-quality gate.
-5. Save thread-specific graph memory.
+1. Validate whether the answer contains usable professional information.
+2. Keep the profile and interview stage unchanged when input is meaningless or off-topic, then request a neutral rephrasing.
+3. Assess seven evidence dimensions for relevant input.
+4. Route to hosted inference or the local adaptive planner.
+5. Execute one or more validated tools when needed.
+6. Apply a response-quality gate.
+7. Save thread-specific graph memory.
 
 The quality gate removes exposed model reasoning, limits the response to one main question, avoids substantially repeated questions, and caps response length. Hosted failures use a retry policy before the configured local fallback is applied.
 
@@ -187,6 +189,7 @@ The project includes automated coverage for:
 - Validated tool-based profile updates
 - Demo conversation progression
 - Adaptive follow-ups for vague claims, leadership, quantified outcomes, and ownership
+- Rejection of meaningless and off-topic answers without praise, profile mutation, hosted-model calls, or interview progression
 - LangGraph routing and evidence assessment through the API
 - MCP tool discovery, published-profile search, and gap analysis
 - Employer answers grounded in profile evidence
@@ -207,7 +210,7 @@ npm run build
 
 At delivery:
 
-- 17 automated tests passed across profile logic, adaptive interviews, hosted tool loops, HTTP routes, and MCP tools.
+- 22 automated tests passed across profile logic, input relevance, adaptive interviews, hosted tool loops, HTTP routes, and MCP tools.
 - The production client built successfully.
 - The production server passed an HTTP smoke test.
 - The production dependency audit reported zero known vulnerabilities.

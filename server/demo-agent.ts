@@ -1,5 +1,5 @@
 import type { Message, Profile } from "../shared/types.js";
-import { assessInterview, planNextQuestion } from "./interview-intelligence.js";
+import { assessInputQuality, assessInterview, irrelevantInputReply, planNextQuestion } from "./interview-intelligence.js";
 import { refreshProfile, uid } from "./profile.js";
 
 type DemoResult = { reply: string; profile: Profile };
@@ -16,6 +16,10 @@ const experiencePattern = /\b(?:at|for)\s+([A-Z][A-Za-z0-9& .-]{2,50})/;
 
 export const demoEmployeeTurn = (profile: Profile, history: Message[], input: string): DemoResult => {
   const clean = input.trim();
+  const inputQuality = assessInputQuality(clean, history);
+  if (!inputQuality.isRelevant) {
+    return { reply: irrelevantInputReply(inputQuality), profile };
+  }
   const next = structuredClone(profile);
 
   if (!next.headline) {

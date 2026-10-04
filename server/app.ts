@@ -134,7 +134,7 @@ export const createApp = (store = new ProfileStore(config.dataFile)) => {
         mode: session.mode,
       });
 
-      session.stage += 1;
+      if (turn.assessment.inputQuality.isRelevant) session.stage += 1;
       session.mode = turn.mode;
       session.messages.push(newMessage("assistant", turn.reply));
       store.saveSession(session);

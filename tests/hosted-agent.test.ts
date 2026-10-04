@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Message } from "../shared/types.js";
 import { hostedEmployeeTurn } from "../server/huggingface.js";
+import { runEmployeeAgent } from "../server/agent-graph.js";
 import { createProfile } from "../server/profile.js";
 
 const completion = (message: Record<string, unknown>) =>
@@ -77,5 +78,31 @@ describe("hosted employee tool loop", () => {
     };
     expect(secondRequest.messages.some((message) => message.role === "tool" && message.tool_call_id === "call-assess")).toBe(true);
   });
-});
 
+  it("stops irrelevant input before calling the hosted model", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const profile = createProfile("Mina Shah");
+
+    const result = await runEmployeeAgent({
+      sessionId: "irrelevant-hosted-session",
+      profile,
+      history: [
+        {
+          id: "message-irrelevant",
+          role: "user",
+          content: "asdf qwerty banana",
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      latestInput: "asdf qwerty banana",
+      stage: 0,
+      mode: "hosted",
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.profile).toEqual(profile);
+    expect(result.reply).toContain("could not connect");
+    expect(result.reply).not.toMatch(/wow|awesome|amazing|great|impressive/i);
+  });
+});
