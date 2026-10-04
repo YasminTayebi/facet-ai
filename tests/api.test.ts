@@ -46,6 +46,20 @@ describe("Facet API", () => {
     expect(response.body.reply).not.toMatch(/wow|awesome|amazing|great|impressive/i);
   });
 
+  it.each(["idk", "no"])("does not treat %s as a professional headline", async (message) => {
+    const app = setup();
+    const created = await request(app).post("/api/sessions").send({ name: "Mina Shah" });
+    const response = await request(app)
+      .post(`/api/sessions/${created.body.session.id}/messages`)
+      .send({ message });
+
+    expect(response.status).toBe(200);
+    expect(response.body.session.stage).toBe(0);
+    expect(response.body.profile.headline).toBe("");
+    expect(response.body.assessment.inputQuality.isRelevant).toBe(false);
+    expect(response.body.reply).toContain("do not have enough professional information");
+  });
+
   it("exposes only published profiles in employer search", async () => {
     const response = await request(setup()).get("/api/profiles?q=evaluation");
     expect(response.status).toBe(200);

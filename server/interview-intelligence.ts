@@ -41,7 +41,7 @@ const leadershipPattern = /\b(?:led|lead|leadership|managed|mentored|coached|dir
 const vaguePattern = /\b(?:strategic|innovative|hardworking|results-driven|excellent|strong communicator|team player|leadership skills)\b/i;
 const professionalPattern = /\b(?:work|job|career|role|company|organization|team|project|product|customer|client|user|business|manager|management|engineer|engineering|developer|designer|design|analyst|analysis|research|researcher|consultant|director|lead|leadership|specialist|founder|officer|marketing|sales|finance|operations|education|healthcare|platform|system|software|data|process|strategy|stakeholder|colleague|skill|responsib|experience|achievement|impact|result|goal|remote|hybrid|on-site|onsite|built|created|designed|developed|implemented|launched|delivered|improved|increased|reduced|saved|grew|managed|mentored|coached|owned|decided|solved|coordinated|facilitated|negotiated)\w*\b/i;
 const contextualAnswerPattern = /\b(?:yes|no|partly|approximately|about|around|because|through|using|with|without|during|before|after)\b/i;
-const nonAnswerPattern = /^(?:i\s+(?:do not|don't)\s+know|not sure|nothing|none|no idea|n\/a|na|test|testing|hello|hi|hey|blah+|whatever|skip|pass|idk|asdf\w*|qwerty\w*)[.!?]*$/i;
+const nonAnswerPattern = /^(?:i\s+(?:do not|don't)\s+know|not sure|nothing|none|no|nope|nah|no idea|yes|yeah|yep|ok|okay|n\/a|na|test|testing|hello|hi|hey|blah+|whatever|skip|pass|idk|asdf\w*|qwerty\w*)[.!?]*$/i;
 const timeOrMetricPattern = /(?:\b\d+(?:\.\d+)?\s*(?:%|percent|x|hours?|days?|weeks?|months?|years?|users?|people|customers?|euros?|dollars?|€|\$)\b|\b(?:days?|weeks?|months?|years?)\b)/i;
 
 const dimensionOrder: EvidenceDimension[] = ["identity", "impact", "ownership", "experience", "skills", "goals", "preferences"];

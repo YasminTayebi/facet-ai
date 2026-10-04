@@ -63,6 +63,23 @@ describe("demo agent", () => {
     expect(result.reply).not.toMatch(/wow|awesome|amazing|great|impressive/i);
   });
 
+  it.each(["idk", "no", "yes", "nope", "ok"])("rejects the standalone non-answer %s", (input) => {
+    const profile = createProfile("Mina Shah");
+    const history: Message[] = [
+      {
+        id: "assistant-opening",
+        role: "assistant",
+        content: "How would you describe the work you do and the value you create?",
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    const result = demoEmployeeTurn(profile, history, input);
+
+    expect(result.profile).toEqual(profile);
+    expect(result.reply).toContain("do not have enough professional information");
+    expect(result.reply).not.toMatch(/useful direction|strong result|wow|awesome|amazing|great|impressive/i);
+  });
+
   it("does not advance after an off-topic conversational answer", () => {
     const profile = createProfile("Mina Shah");
     const result = demoEmployeeTurn(profile, [], "My cat likes sleeping in the sunny garden");
